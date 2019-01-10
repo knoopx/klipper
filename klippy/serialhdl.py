@@ -267,7 +267,6 @@ class SerialBootStrap:
 # Attempt to place an AVR stk500v2 style programmer into normal mode
 def stk500v2_leave(ser, reactor):
     logging.debug("Starting stk500v2 leave programmer sequence")
-    util.clear_hupcl(ser.fileno())
     origbaud = ser.baudrate
     # Request a dummy speed first as this seems to help reset the port
     ser.baudrate = 2400

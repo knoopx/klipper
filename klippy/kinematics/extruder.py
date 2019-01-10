@@ -220,6 +220,9 @@ class PrinterExtruder:
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
+    def __init__(self):
+        self.extrude_pos = 0.
+
     def set_active(self, print_time, is_active):
         return 0.
     def motor_off(self, move_time):
