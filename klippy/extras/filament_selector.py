@@ -1,8 +1,3 @@
-# Control for 602_Selector
-#
-# Copyright (C) 2018  Eric Callahan <arksine.code@gmail.com>
-#
-# This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 import math
 import stepper
@@ -11,7 +6,7 @@ import chelper
 import pickle
 
 from os.path import expanduser
-TOOL_FILE = expanduser('~') + "/s3l3ctor_tool.pkl"
+TOOL_FILE = expanduser('~') + "/filament_selector.cfg"
 
 
 STEPPERS = {
@@ -29,7 +24,7 @@ class error(Exception):
 # TODO: need to log position after pausing a print
 
 
-class SixOhTwo:
+class FilamentSelector:
     def __init__(self, config):
         self.homed = False
         self.printer = config.get_printer()
@@ -41,7 +36,6 @@ class SixOhTwo:
         idler_spacing = config.getfloat('idler_spacing', 100., above=0.)
         self.idler_positions = [
             (idler_offset + i*idler_spacing) for i in range(5, -1, -1)]
-        # [117.5, 95.5, 73.5, 51.5, 29.5, 7.5]
         print(self.idler_positions)
         self.tumbler_velocity = config.getfloat('tumbler_velocity', 10.)
         self.change_retract_dist = config.getfloat(
@@ -494,4 +488,4 @@ class Move:
 
 
 def load_config(config):
-    return SixOhTwo(config)
+    return FilamentSelector(config)
