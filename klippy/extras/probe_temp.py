@@ -54,6 +54,13 @@ class ProbeTemp:
             self.sensor = thermistor.Thermistor(config, params)
             self.sensor.setup_minmax(0., 100.)
             self.sensor.setup_callback(self.temperature_callback)
+        else:
+            # A sensor was added to config but not found in the default
+            # sensor dictionary. Check to see if it is a custom thermistor.
+            pheater = config.get_printer().lookup_object("heater")
+            custom_thermistor = pheater.sensors[self.sensor_type]
+            self.sensor = custom_thermistor(self.config)
+
         self.printer.register_event_handler("klippy:ready",
                                             self.handle_ready)
         self.gcode.register_command(
@@ -68,15 +75,10 @@ class ProbeTemp:
     def handle_ready(self):
         self.cal_helper.handle_ready()
         self.toolhead = self.printer.lookup_object('toolhead')
-        if self.sensor is None:
-            # A sensor was added to config but not found in the default
-            # sensor dictionary. Check to see if it is a custom thermistor.
-            custom_thermistor = self.printer.lookup_object(
-                self.sensor_type)
-            self.sensor = custom_thermistor.create(self.config)
-            if self.sensor:
-                self.sensor.setup_minmax(0., 100.)
-                self.sensor.setup_callback(self.temperature_callback)
+        if self.sensor:
+            self.sensor.setup_minmax(0., 100.)
+            self.sensor.setup_callback(self.temperature_callback)
+
     def temperature_callback(self, readtime, temp):
         with self.lock:
             self.sensor_temp = temp
@@ -185,7 +187,7 @@ class ProbeCalibrationHelper:
         probe_config = config.getsection('probe')
         self.z_offset = probe_config.getfloat('z_offset')
         self.gcode.register_command(
-            'CALIBRATE_PROBE_TEMP', self.cmd_CALIBRATE_PROBE_TEMP, 
+            'CALIBRATE_PROBE_TEMP', self.cmd_CALIBRATE_PROBE_TEMP,
             desc=self.cmd_CALIBRATE_PROBE_TEMP_help)
     def handle_ready(self):
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -236,20 +238,20 @@ class ProbeCalibrationHelper:
         keep_alive = True
         start_time = reactor.monotonic()
         current_temp = self.sensor.get_current_temp()
-        while current_temp < max_probe_temp and keep_alive: 
+        while current_temp < max_probe_temp and keep_alive:
             z_pos = self._next_probe()
             # store temp, offset, and time
             probe_array.append((current_temp, z_pos - self.z_offset, reactor.monotonic() - start_time))
-            self.gcode.respond("Probe Temp: %.2f, Z-Position: %.4f" % 
+            self.gcode.respond("Probe Temp: %.2f, Z-Position: %.4f" %
                               (current_temp, z_pos))
             if self.display:
-                self.display.set_message("P: %.2f, Z: %.2f" % 
+                self.display.set_message("P: %.2f, Z: %.2f" %
                                         (current_temp, z_pos), 5.)
             # Lower Head to absorb maximum heat
             self._move_toolhead_z(.2)
-            keep_alive = self.sensor.pause_for_temp(min(current_temp + .5, max_probe_temp), 
+            keep_alive = self.sensor.pause_for_temp(min(current_temp + .5, max_probe_temp),
                                                     timeout=timeout)
-            current_temp = self.sensor.get_current_temp()                                 
+            current_temp = self.sensor.get_current_temp()
         self.gcode.respond_info("Probe Calibration Complete!")
         if self.display:
             self.display.set_message("PINDA Cal Done!", 10.)
@@ -257,7 +259,7 @@ class ProbeCalibrationHelper:
         self.gcode.run_script_from_command("M104 S0")
         self.gcode.run_script_from_command("M140 S0")
         self.gcode.run_script_from_command("G1 Z50")
-        
+
         # Save info to dictionary to file
         try:
             f = open(HOME_DIR + "/PindaTemps.json", "wb")
