@@ -690,7 +690,6 @@ try:
 except KeyError:
     pass
 
-_PARENT = None
 KLIPPER_CFG_NAME = 'klipper_config.cfg'
 KLIPPER_LOG_NAME = "klippy.log"
 
@@ -720,7 +719,6 @@ class rrHandler(tornado.web.RequestHandler):
     parent = printer = sd_path = logger = None
 
     def initialize(self, sd_path):
-        self.parent = _PARENT
         self.printer = self.parent.printer
         self.sd_path = sd_path
         self.logger = self.parent.logger
@@ -1073,10 +1071,18 @@ class RepRapGuiModule(object):
     htmlroot = None
 
     def __init__(self, config):
+        self.config = config
+        self.user = config.get('user', '')
+        self.passwd = config.get('password', '')
+        self.port = config.getint('http', default=80)
+        self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
+
+    def handle_connect(self):
         global _TORNADO_THREAD
-        global _PARENT
-        _PARENT = self
-        self.printer = printer = config.get_printer()
+        config = self.config
+        printer = self.printer
         self.logger = logging
         self.logger_tornado = logging
         # self.logger = printer.logger.getChild("DuetWebControl")
@@ -1085,7 +1091,7 @@ class RepRapGuiModule(object):
         self.gcode = printer.lookup_object('gcode')
         # logging.info("Initializing RepRap API")
 
-        # self.gui_stats = GuiStats(config)
+        self.gui_stats = GuiStats(config)
         self.gcode_resps = []
         self.lock = threading.Lock()
         # Read config
@@ -1095,8 +1101,6 @@ class RepRapGuiModule(object):
             raise printer.config_error(
                 "DuetWebControl files not found '%s'" % htmlroot)
         self.logger.debug("html root: %s" % (htmlroot,))
-        self.user = config.get('user', '')
-        self.passwd = config.get('password', '')
         # Camera information
         self.feed_interval = config.getfloat('feedrate', minval=.0, default=.1)
         # self.camera = printer.try_load_module(
@@ -1166,7 +1170,7 @@ class RepRapGuiModule(object):
         self.logger_tornado.debug(" ".join(values))
 
     def Tornado_execute(self, config, application):
-        port = http_port = config.getint('http', default=80)
+        port = http_port = self.port
         https_port = config.getint('https', None)
         ssl_options = None
 
