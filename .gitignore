@@ -4,3 +4,6 @@ out
 .config
 .config.old
 klippy/.version
+.cache
+dist
+venv
