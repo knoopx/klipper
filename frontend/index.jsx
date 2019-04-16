@@ -3,6 +3,9 @@ import React, { useEffect } from "react";
 import ReactDOM from "react-dom";
 import { observable, autorun } from "mobx";
 
+const LOG_HISTORY_LENGTH = 1000;
+const TEMP_HISTORY_LENGTH = 3600;
+
 const readLines = onLine => {
   var buffer = "";
 
@@ -32,17 +35,17 @@ class Client {
 
   constructor(endpoint) {
     this.socket = new WebSocket(endpoint);
-    this.socket.onopen = this.onConnect;
     this.parse = awaitReply(this.onReply);
     this.write = readLines(this.parse);
     this.socket.onmessage = this.onRead;
+    this.socket.onopen = this.onConnect;
 
     autorun(() => {
       if (!this.isBusy) {
         if (this.queue.length > 0) {
+          this.isBusy = true;
           const next = this.queue.shift();
           console.log("> " + next);
-          this.isBusy = true;
           this.socket.send(`${next}\n`);
         } else {
           this.onIdle();
