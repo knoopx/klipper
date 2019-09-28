@@ -12,7 +12,7 @@ class GCodeTimer:
     delay_time = reactor.monotonic() + delay
     self.timer = reactor.register_timer(self.invoke, delay_time)
 
-  def invoke(self):
+  def invoke(self, _):
     self.reactor.unregister_timer(self.timer)
     self.gcode.run_script_from_command(self.script)
     return self.reactor.NEVER
