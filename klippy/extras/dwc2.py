@@ -506,25 +506,24 @@ class DWC2:
 
   #	dwc rr_gcode - append to gcode_queue
   def rr_gcode(self, web_):
-
-    #	handover to klippy as: [ "G28", "M114", "G1 X150", etc... ]
+    # handover to klippy as: [ "G28", "M114", "G1 X150", etc... ]
     gcodes = str(web_.get_argument('gcode')).replace('0:', '').replace('"', '').split("\n")
 
     rrf_commands = {
       'G10': self.cmd_G10,  # set heaters temp
       'M0': self.cmd_M0,  # cancel SD print
       'M24': self.cmd_M24,  # resume sdprint
-      'M32': self.cmd_M32,  # Start sdprint
+      'M32': self.cmd_M32,  # start sdprint
       'M98': self.cmd_M98,  # run macro
       'M106': self.cmd_M106,  # set fan
-      'M140': self.cmd_M140,  # set bedtemp(limit to 0 mintemp)
+      'M140': self.cmd_M140,  # set bedtemp (limit to 0 mintemp)
       'M290': self.cmd_M290,  # set babysteps
       'M999': self.cmd_M999  # issue restart
     }
 
     #	allow - set heater, cancelprint, set bed, ,pause, resume, set fan, set speedfactor, set extrusion multipler, babystep, ok in popup
     midprint_allow = [
-      'G10', 'M0', 'M140', 'M24', 'M25', 'M106', 'M220', 'M221', 'M290', 'M292',
+      'G10', 'M0', 'M24', 'M25', 'M106', 'M140', 'M220', 'M221', 'M290', 'M292',
       'HELP', 'STATUS', 'GET_POSITION',
       'BLTOUCH_DEBUG',
       'PROBE_TEMP',
@@ -1069,7 +1068,7 @@ class DWC2:
 
     mm_step = self.gcode.get_float('Z', params, None)
     if not mm_step: mm_step = self.gcode.get_float('S', params, None)  # DWC 1 workarround
-    params = self.parse_params('SET_GCODE_OFFSET Z_ADJUST%0.2f' % mm_step)
+    params = self.parse_params('SET_GCODE_OFFSET MOVE=1 Z_ADJUST%0.2f' % mm_step)
     self.gcode.cmd_SET_GCODE_OFFSET(params)
     self.gcode_reply.append('Z adjusted by %0.2f' % mm_step)
 
