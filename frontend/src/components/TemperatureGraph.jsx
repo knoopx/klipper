@@ -2,26 +2,14 @@ import React from "react"
 import { ScaleSVG } from "@vx/responsive"
 import { Group } from "@vx/group"
 import { LinePath } from "@vx/shape"
-import { genDateValue } from "@vx/mock-data"
 import { scaleTime, scaleLinear, scaleOrdinal } from "@vx/scale"
 import { extent, max } from "d3-array"
-
-function genLines(num) {
-  return new Array(num).fill(1).map(() => {
-    return genDateValue(25)
-  })
-}
-
-const series = genLines(3)
-const data = series.reduce((rec, d) => {
-  return rec.concat(d)
-}, [])
 
 // accessors
 const x = (d) => d.date
 const y = (d) => d.value
 
-export default ({ width, height }) => {
+const TemperatureGraph = ({ width, height, data }) => {
   const xMax = width
   const yMax = height
 
@@ -36,13 +24,13 @@ export default ({ width, height }) => {
   })
 
   const colorScale = scaleOrdinal({
-    domain: series,
-    range: ["red", "blue", "green", "blue"],
+    domain: data.length,
+    range: ["", "blue", "green", "blue"],
   })
 
   return (
     <ScaleSVG width={width} height={height}>
-      {series.map((d, i) => (
+      {data.map((d, i) => (
         <Group key={`lines-${i}`}>
           <LinePath
             data={d}
@@ -56,3 +44,9 @@ export default ({ width, height }) => {
     </ScaleSVG>
   )
 }
+
+TemperatureGraph.defaultProps = {
+  data: [],
+}
+
+export default TemperatureGraph

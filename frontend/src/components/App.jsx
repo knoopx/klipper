@@ -1,4 +1,5 @@
 import React, { useEffect } from "react"
+import { inject, observer } from "mobx-react"
 import { hot } from "react-hot-loader/root"
 
 import LogCat from "./LogCat"
@@ -8,15 +9,15 @@ import TemperatureGraph from "./TemperatureGraph"
 import Panel from "./Panel"
 import Button from "./Button"
 
-const App = () => {
+const App = ({ store }) => {
   return (
-    <div className="flex flex-auto p-1">
-      <div className="flex flex-auto flex-col">
+    <div className="flex p-1">
+      <div className="flex flex-col w-1/3">
         <Panel title="Status">
           <div className="flex flex-auto mb-4 text-lg">
             <div className="flex flex-auto flex-col items-center">
               <div>
-                0.000
+                {store.status.toolhead.position[0]}
                 <span className="ml-1 text-grey-darker text-sm font-thin">
                   mm
                 </span>
@@ -25,7 +26,7 @@ const App = () => {
             </div>
             <div className="flex flex-auto flex-col items-center">
               <div>
-                0.000
+                {store.status.toolhead.position[1]}
                 <span className="ml-1 text-grey-darker text-sm font-thin">
                   mm
                 </span>
@@ -34,7 +35,7 @@ const App = () => {
             </div>
             <div className="flex flex-auto flex-col items-center">
               <div>
-                0.000
+                {store.status.toolhead.position[2]}
                 <span className="ml-1 text-grey-darker text-sm font-thin">
                   mm
                 </span>
@@ -42,38 +43,41 @@ const App = () => {
               <div className="mt-1 text-white font-bold">Z</div>
             </div>
           </div>
-          <Button>Disconnect</Button>
         </Panel>
         <Panel title="File List">
           <FileList />
         </Panel>
       </div>
 
-      <div className="flex flex-auto flex-col">
+      <div className="flex flex-col w-1/3">
         <Panel title="Temperature">
           <TemperatureGraph width={400} height={100} />
         </Panel>
         <Panel>Something else</Panel>
       </div>
 
-      <div className="flex flex-auto flex-col">
+      <div className="flex flex-col w-1/3">
         <Panel title="Axes">
           <Jogging />
         </Panel>
         <Panel title="Temperature">
           <div className="flex flex-col">
-            <div className="flex">
-              <div className="mx-1">T0</div>
-              <div className="mx-1">220ºC</div>
-            </div>
-            <div className="flex">
-              <div className="mx-1 text-white font-bold">B</div>
-              <div className="mx-1 text-red-500">220ºC</div>
-            </div>
-            <div className="flex">
-              <div className="mx-1">P</div>
-              <div className="mx-1">220ºC</div>
-            </div>
+            {store.temperatures.map(({ object, temperature }) => (
+              <div className="flex">
+                <div className="mx-1">{object}</div>
+                <div className="mx-1">{temperature}ºC</div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+        <Panel title="Fans">
+          <div className="flex flex-col">
+            {store.fans.map(({ object, speed }) => (
+              <div className="flex">
+                <div className="mx-1">{object}</div>
+                <div className="mx-1">{speed} RPM</div>
+              </div>
+            ))}
           </div>
         </Panel>
         <Panel title="Log">
@@ -84,4 +88,4 @@ const App = () => {
   )
 }
 
-export default hot(App)
+export default hot(inject("store")(observer(App)))

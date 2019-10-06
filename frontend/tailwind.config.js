@@ -5,5 +5,5 @@ module.exports = {
   variants: {
     borderWidth: ["last", "hover", "focus"],
   },
-  plugins: [],
+  plugins: [require("tailwind-css-variables")],
 }

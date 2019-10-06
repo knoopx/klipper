@@ -77,6 +77,9 @@ class ProbeTemp:
     def get_temp(self, eventtime):
         with self.lock:
             return self.sensor_temp, self.target
+    def get_status(self, eventtime):
+        [temp, target_temp] = self.get_temp(eventtime)
+        return {'temperature': temp, 'target': target_temp}
     def get_probe_offset(self):
         offset_temp = self.get_temp(0)[0]
         if self.probe_offsets:
@@ -184,6 +187,9 @@ class ProbeCalibrationHelper:
         self.gcode.register_command(
             'CALIBRATE_PROBE_TEMP', self.cmd_CALIBRATE_PROBE_TEMP,
             desc=self.cmd_CALIBRATE_PROBE_TEMP_help)
+
+        self.lock = threading.Lock()
+
     def handle_ready(self):
         self.toolhead = self.printer.lookup_object('toolhead')
         self.kinematics = self.toolhead.get_kinematics()
@@ -192,6 +198,7 @@ class ProbeCalibrationHelper:
         except:
             # Display not available.  Its not necessary, only used for feedback
             self.display = None
+
     def _next_probe(self):
         self._move_toolhead_z(Z_LIFT)
         self.gcode.run_script_from_command("PROBE")

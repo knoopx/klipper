@@ -1,8 +1,15 @@
 import React from "react"
 import ReactDOM from "react-dom"
+import { Provider } from "mobx-react"
 
 import App from "./components/App"
-import Client from "./support/Client"
+import Store from "./store"
 
-const client = new Client("ws://raspberrypi3.local:9090/ws")
-ReactDOM.render(<App />, document.getElementById("root"))
+const store = Store.create()
+
+ReactDOM.render(
+  <Provider store={store}>
+    <App />
+  </Provider>,
+  document.getElementById("root"),
+)
