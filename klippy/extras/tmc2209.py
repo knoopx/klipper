@@ -105,13 +105,7 @@ class TMC2209:
     def get_status(self, eventtime):
         status = {}
         for reg_name, val in self.cmdhelper.fields.registers.items():
-            if reg_name not in self.cmdhelper.read_registers:
-                status[reg_name] = val
-        for reg_name in self.cmdhelper.read_registers:
-            val = self.cmdhelper.mcu_tmc.get_register(reg_name)
-            if self.cmdhelper.read_translate is not None:
-                reg_name, val = self.cmdhelper.read_translate(reg_name, val)
-                status[reg_name] = val
+            status[reg_name] = val
 
         return status
 
