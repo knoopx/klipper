@@ -8,6 +8,10 @@ import FileList from "./FileList"
 import TemperatureGraph from "./TemperatureGraph"
 import Panel from "./Panel"
 import Button from "./Button"
+import DefinitionList from "./DefinitionList"
+import Position from "./Position"
+
+const SubHeading = (props) => <div className="mb-2 font-medium" {...props} />
 
 const App = ({ store }) => {
   if (!store.isConnected || !store.gotStatus) {
@@ -17,79 +21,65 @@ const App = ({ store }) => {
     <div className="flex p-1">
       <div className="flex flex-col w-1/3">
         <Panel title="Status">
-          <div className="flex flex-auto mb-4 text-lg">
-            <div className="flex flex-auto flex-col items-center">
-              {JSON.stringify(store.status.toolhead)}
-              <div>
-                {store.status.toolhead.position[0]}
-                <span className="ml-1 text-grey-darker text-sm font-thin">
-                  mm
-                </span>
-              </div>
-              <div className="mt-1 text-white font-bold">X</div>
-            </div>
-            <div className="flex flex-auto flex-col items-center">
-              <div>
-                {store.status.toolhead.position[1]}
-                <span className="ml-1 text-grey-darker text-sm font-thin">
-                  mm
-                </span>
-              </div>
-              <div className="mt-1 text-white font-bold">Y</div>
-            </div>
-            <div className="flex flex-auto flex-col items-center">
-              <div>
-                {store.status.toolhead.position[2]}
-                <span className="ml-1 text-grey-darker text-sm font-thin">
-                  mm
-                </span>
-              </div>
-              <div className="mt-1 text-white font-bold">Z</div>
-            </div>
-          </div>
+          <DefinitionList object={store.status.toolhead} />
+          <DefinitionList object={store.status.virtual_sdcard} />
+          <DefinitionList object={store.status.pause_resume} />
+          <DefinitionList object={store.status.idle_timeout} />
+
+          {/* <Position position={store.status.toolhead.position} /> */}
         </Panel>
-        <Panel title="File List">
+        <Panel title="Log">
+          <LogCat />
+        </Panel>
+
+        {/* <Panel title="Axes">
+          <Jogging />
+        </Panel> */}
+
+        {/* <Panel title="File List">
           <FileList />
-        </Panel>
+        </Panel> */}
       </div>
 
       <div className="flex flex-col w-1/3">
-        <Panel title="Temperature">
+        {/* <Panel title="Temperature">
           <TemperatureGraph
             width={400}
             height={100}
             data={store.temperatureGraphData}
           />
+        </Panel> */}
+        <Panel title="Macros">
+          <DefinitionList object={store.lookupObjects("gcode_macro")} />
         </Panel>
-        <Panel>Something else</Panel>
+        <Panel title="GCode">
+          <DefinitionList object={store.status.gcode} />
+        </Panel>
       </div>
 
       <div className="flex flex-col w-1/3">
-        <Panel title="Axes">
-          <Jogging />
+        <Panel title="Extruder">
+          <DefinitionList object={store.status.extruder0} />
+          <DefinitionList object={store.status.firmware_retraction} />
         </Panel>
-        <Panel title="Temperature">
-          <div className="flex flex-col">
-            {store.temperatures.map(({ object, temperature }) => (
-              <div className="flex">
-                <div className="mx-1">{object}</div>
-                <div className="mx-1">{temperature}ºC</div>
-              </div>
-            ))}
-          </div>
+
+        <Panel title="Heater Bed">
+          <DefinitionList object={store.status.heater_bed} />
         </Panel>
-        <Panel title="Fans">
-          <div className="flex flex-col">
-            {store.fans.map(({ object, speed }) => (
-              <div className="flex">
-                <div className="mx-1">{object}</div>
-                <div className="mx-1">{speed} RPM</div>
-              </div>
-            ))}
-          </div>
+        <Panel title="Probe Temperature">
+          <DefinitionList object={store.status.probe_temp} />
         </Panel>
-        <Panel title="Log">
-          <LogCat />
+        <Panel title="Fan">
+          <DefinitionList object={store.status.fan} />
+        </Panel>
+        <Panel title="Nozzle Cooling Fan">
+          <DefinitionList
+            object={store.status["heater_fan nozzle_cooling_fan"]}
+          />
+        </Panel>
+
+        <Panel title="tmc2209">
+          <DefinitionList object={store.lookupObjects("tmc2209")} />
         </Panel>
       </div>
     </div>

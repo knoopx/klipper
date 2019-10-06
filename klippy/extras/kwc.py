@@ -15,9 +15,17 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
     def initialize(self, kwc):
       self.kwc = kwc
+      self.kwc.gcode.register_respond_callback(self.respond_callback)
       print("initializing WebSocketHandler")
       pc = tornado.ioloop.PeriodicCallback(self.report_status, 200)
       pc.start()
+
+    def broadcast(self, payload):
+        for client in self.clients:
+            try:
+                client.write_message(json.dumps(payload, default=lambda x: x.__dict__))
+            except:
+                logging.error("Error sending message", exc_info=True)
 
     def check_origin(self, origin):
         return True
@@ -33,17 +41,17 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         # body = parsed["body"]
         pass
 
+    def respond_callback(self, msg):
+        self.broadcast({"message": msg})
+
     def report_status(self):
-        for client in self.clients:
-            try:
-                client.write_message(json.dumps({"status": self.kwc.status}, default=lambda x: x.__dict__))
-            except:
-                logging.error("Error sending message", exc_info=True)
+        self.broadcast({"status": self.kwc.status})
 
 
 class KlipperWebControl:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.gcode = self.printer.lookup_object('gcode')
         reactor = self.printer.get_reactor()
         self.status_timer = reactor.register_timer(self.update_status_callback)
         self.objects = []

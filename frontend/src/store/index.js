@@ -33,6 +33,14 @@ export default types
       console.log(self.temperatureHistory)
       return Object.values(self.temperatureHistory)
     },
+    lookupObjects(key) {
+      return Object.keys(self.status).reduce((result, name) => {
+        if (name.split(/\s+/g).includes(key)) {
+          return { ...result, [name]: self.status[name] }
+        }
+        return result
+      }, {})
+    },
   }))
   .actions((self) => ({
     afterCreate: () => {
