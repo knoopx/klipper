@@ -74,8 +74,8 @@ class TMC2209:
         diag_pin = config.get('diag_pin', None)
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc, diag_pin)
         # Register commands
-        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
-        cmdhelper.setup_register_dump(ReadRegisters)
+        self.cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
+        self.cmdhelper.setup_register_dump(ReadRegisters)
         # Setup basic register values
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
@@ -104,16 +104,14 @@ class TMC2209:
 
     def get_status(self, eventtime):
         status = {}
-        for reg_name, val in self.fields.registers.items():
-            if reg_name not in self.read_registers:
+        for reg_name, val in self.cmdhelper.fields.registers.items():
+            if reg_name not in self.cmdhelper.read_registers:
                 status[reg_name] = val
-                # self.fields.pretty_format(reg_name, val)
-        for reg_name in self.read_registers:
-            val = self.mcu_tmc.get_register(reg_name)
-            if self.read_translate is not None:
-                reg_name, val = self.read_translate(reg_name, val)
+        for reg_name in self.cmdhelper.read_registers:
+            val = self.cmdhelper.mcu_tmc.get_register(reg_name)
+            if self.cmdhelper.read_translate is not None:
+                reg_name, val = self.cmdhelper.read_translate(reg_name, val)
                 status[reg_name] = val
-                # self.fields.pretty_format(reg_name, val)
 
         return status
 
