@@ -53,6 +53,17 @@ FieldFormatters = dict(tmc2208.FieldFormatters)
 # TMC2209 printer object
 ######################################################################
 
+# def pretty_format(self, reg_name, reg_value):
+#     reg_fields = self.all_fields.get(reg_name, {})
+#     reg_fields = sorted([(mask, name) for name, mask in reg_fields.items()])
+#     fields = []
+#     for mask, field_name in reg_fields:
+#         field_value = self.get_field(field_name, reg_value, reg_name)
+#         sval = self.field_formatters.get(field_name, str)(field_value)
+#         if sval and sval != "0":
+#             fields.append(" %s=%s" % (field_name, sval))
+#     return "%08x%s" % (reg_value, "".join(fields))
+
 class TMC2209:
     def __init__(self, config):
         # Setup mcu communication
@@ -92,9 +103,19 @@ class TMC2209:
         set_config_field(config, "SGTHRS", 0)
 
     def get_status(self, eventtime):
-        hold_current = self.current_helper._calc_current_from_field("IHOLD")
-        run_current = self.current_helper._calc_current_from_field("IRUN")
-        return { "hold_current": hold_current, "run_current": run_current}
+        status = {}
+        for reg_name, val in self.fields.registers.items():
+            if reg_name not in self.read_registers:
+                status[reg_name] = val
+                # self.fields.pretty_format(reg_name, val)
+        for reg_name in self.read_registers:
+            val = self.mcu_tmc.get_register(reg_name)
+            if self.read_translate is not None:
+                reg_name, val = self.read_translate(reg_name, val)
+                status[reg_name] = val
+                # self.fields.pretty_format(reg_name, val)
+
+        return status
 
 def load_config_prefix(config):
     return TMC2209(config)
