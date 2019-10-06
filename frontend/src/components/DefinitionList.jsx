@@ -6,7 +6,7 @@ const DefinitionList = ({ object }) => {
       {Object.keys(object)
         // .filter((key) => Boolean(object[key]))
         .map((key) => (
-          <div className="table-row">
+          <div className="table-row" key={key}>
             <dt className="table-cell w-1 px-3 border text-right font-medium">
               {key}
             </dt>

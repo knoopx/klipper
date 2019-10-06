@@ -9,6 +9,7 @@ export default types
     gotStatus: false,
     status: {},
     temperatureHistory: {},
+    log: [],
   }))
   .views((self) => ({
     get fans() {
@@ -74,7 +75,8 @@ export default types
       if (payload.status) {
         self.gotStatus = true
         self.status = payload.status
-        console.log(self.status)
+      } else if (payload.message) {
+        self.log.push(payload.message)
       }
     },
   }))

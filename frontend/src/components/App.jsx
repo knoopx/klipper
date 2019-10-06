@@ -29,7 +29,7 @@ const App = ({ store }) => {
           {/* <Position position={store.status.toolhead.position} /> */}
         </Panel>
         <Panel title="Log">
-          <LogCat />
+          <LogCat lines={store.log} />
         </Panel>
 
         {/* <Panel title="Axes">

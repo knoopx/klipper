@@ -21,6 +21,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
       pc.start()
 
     def broadcast(self, payload):
+        print(("Clients", len(self.clients)))
         for client in self.clients:
             try:
                 client.write_message(json.dumps(payload, default=lambda x: x.__dict__))
@@ -31,9 +32,11 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         return True
 
     def open(self):
+        print("New client")
         self.clients.add(self)
 
     def on_close(self):
+        print("client disconnected")
         self.clients.remove(self)
 
     def on_message(self, message):
