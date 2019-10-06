@@ -102,10 +102,24 @@ class TMC2209:
         set_config_field(config, "PWM_LIM", 12)
         set_config_field(config, "SGTHRS", 0)
 
+    def read_translate(self, reg_name, val):
+        if reg_name == "IOIN":
+            drv_type = self.cmdhelper.fields.get_field("SEL_A", val)
+            reg_name = "IOIN@TMC220x" if drv_type else "IOIN@TMC222x"
+        return reg_name, val
+
     def get_status(self, eventtime):
         status = {}
-        for reg_name, val in self.fields.registers.items():
-            status[reg_name] = val
+
+        for reg_name, val in self.cmdhelper.fields.registers.items():
+            if reg_name not in self.cmdhelper.read_registers:
+                status[reg_name] = self.cmdhelper.fields.dump_register_fields(reg_name, val)
+
+        for reg_name in self.cmdhelper.read_registers:
+            val = self.cmdhelper.mcu_tmc.get_register(reg_name)
+            if self.read_translate is not None:
+                reg_name, val = self.read_translate(reg_name, val)
+                status[reg_name] = self.cmdhelper.fields.dump_register_fields(reg_name, val)
 
         return status
 

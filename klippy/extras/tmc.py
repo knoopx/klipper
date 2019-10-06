@@ -62,16 +62,21 @@ class FieldHelper:
         else:
             val = config.getint(config_name, default, minval=0, maxval=maxval)
         return self.set_field(field_name, val)
-    def pretty_format(self, reg_name, reg_value):
-        # Provide a string description of a register
+
+    def dump_register_fields(self, reg_name, reg_value):
+        # Returns a dict of fields and its values found in a register
         reg_fields = self.all_fields.get(reg_name, {})
         reg_fields = sorted([(mask, name) for name, mask in reg_fields.items()])
-        fields = []
+        fields = {}
         for mask, field_name in reg_fields:
             field_value = self.get_field(field_name, reg_value, reg_name)
             sval = self.field_formatters.get(field_name, str)(field_value)
-            if sval and sval != "0":
-                fields.append(" %s=%s" % (field_name, sval))
+            fields[field_name] = sval
+        return fields
+
+    def pretty_format(self, reg_name, reg_value):
+        # Provide a string description of a register
+        fields = [" %s=%s" % (field_name, sval) for field_name, sval in self.dump_register_fields(reg_name, reg_value)]
         return "%-11s %08x%s" % (reg_name + ":", reg_value, "".join(fields))
 
 
