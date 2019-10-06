@@ -13,8 +13,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
     def initialize(self, kwc):
       self.kwc = kwc
-      print("WebSocketHandler")
-      print(kwc)
+      print("initializing WebSocketHandler")
       pc = tornado.ioloop.PeriodicCallback(self.report_status, 1000)
       pc.start()
 
@@ -60,9 +59,8 @@ class KlipperWebControl:
         self.get_statuses = [(name, o.get_status) for name, o in self.printer.lookup_objects() if hasattr(o, 'get_status')]
         reactor = self.printer.get_reactor()
         reactor.update_timer(self.status_timer, reactor.NOW)
-
-        self.app.listen(9090)
-        tornado.ioloop.IOLoop.current().start()
+        # self.app.listen(9090)
+        # tornado.ioloop.IOLoop.current().start()
 
     def update_status_callback(self, eventtime):
         print("updating status")
