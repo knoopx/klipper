@@ -24,8 +24,8 @@ const TemperatureGraph = ({ width, height, data }) => {
   })
 
   const colorScale = scaleOrdinal({
-    domain: data.length,
-    range: ["", "blue", "green", "blue"],
+    domain: data,
+    range: ["red", "blue", "green", "blue"],
   })
 
   return (

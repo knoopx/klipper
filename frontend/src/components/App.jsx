@@ -10,12 +10,17 @@ import Panel from "./Panel"
 import Button from "./Button"
 
 const App = ({ store }) => {
+  if (!store.isConnected || !store.gotStatus) {
+    return <div>Connecting...</div>
+  }
   return (
     <div className="flex p-1">
       <div className="flex flex-col w-1/3">
         <Panel title="Status">
           <div className="flex flex-auto mb-4 text-lg">
             <div className="flex flex-auto flex-col items-center">
+              {JSON.stringify(store.status.toolhead)}
+              {JSON.stringify(store.status.heater)}
               <div>
                 {store.status.toolhead.position[0]}
                 <span className="ml-1 text-grey-darker text-sm font-thin">
@@ -51,7 +56,11 @@ const App = ({ store }) => {
 
       <div className="flex flex-col w-1/3">
         <Panel title="Temperature">
-          <TemperatureGraph width={400} height={100} />
+          <TemperatureGraph
+            width={400}
+            height={100}
+            data={store.temperatureGraphData}
+          />
         </Panel>
         <Panel>Something else</Panel>
       </div>

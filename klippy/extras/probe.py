@@ -3,7 +3,7 @@
 # Copyright (C) 2017-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import pins, homing, manual_probe
+import pins, homing, manual_probe, threading
 
 HINT_TIMEOUT = """
 Make sure to home the printer before probing. If the probe
@@ -17,6 +17,7 @@ class PrinterProbe:
         self.printer = config.get_printer()
         self.name = config.get_name()
         self.mcu_probe = mcu_probe
+        self.lock = threading.Lock()
         self.speed = config.getfloat('speed', 5.0)
         self.x_offset = config.getfloat('x_offset', 0.)
         self.y_offset = config.getfloat('y_offset', 0.)
@@ -100,6 +101,15 @@ class PrinterProbe:
             return z_sorted[middle]
         # even number of samples
         return self._calc_mean(z_sorted[middle-1:middle+1])
+
+    def get_status(self, eventtime):
+        with self.lock:
+            res = self.mcu_probe.query_endstop(eventtime)
+            return {
+                'value': res,
+                'triggered': not not res
+            }
+
     def run_probe(self, params={}):
         speed = self.gcode.get_float(
             "PROBE_SPEED", params, self.speed, above=0.)

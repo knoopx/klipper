@@ -34,7 +34,6 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         pass
 
     def report_status(self):
-        print(self.kwc.status)
         for client in self.clients:
             try:
                 client.write_message(json.dumps({"status": self.kwc.status}, default=lambda x: x.__dict__))
