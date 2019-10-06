@@ -88,7 +88,7 @@ class KlipperWebControl:
             except:
                 logging.exception("Could not get status for " + name)
 
-        return eventtime + 1.
+        return eventtime + .2
 
 def load_config(config):
     return KlipperWebControl(config)

@@ -75,6 +75,7 @@ export default types
       if (payload.status) {
         self.gotStatus = true
         self.status = payload.status
+        console.log(payload.status.toolhead.estimated_print_time)
       } else if (payload.message) {
         self.log.push(payload.message)
       }
