@@ -69,7 +69,7 @@ class TMC2209:
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
-        tmc2130.TMCCurrentHelper(config, self.mcu_tmc)
+        self.current_helper = tmc2130.TMCCurrentHelper(config, self.mcu_tmc)
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
@@ -90,6 +90,11 @@ class TMC2209:
         set_config_field(config, "PWM_REG", 8)
         set_config_field(config, "PWM_LIM", 12)
         set_config_field(config, "SGTHRS", 0)
+
+    def get_status(self, eventtime):
+        hold_current = self.current_helper._calc_current_from_field("IHOLD")
+        run_current = self.current_helper._calc_current_from_field("IRUN")
+        return { "hold_current": hold_current, "run_current": run_current}
 
 def load_config_prefix(config):
     return TMC2209(config)
