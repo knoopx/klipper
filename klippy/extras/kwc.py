@@ -14,14 +14,13 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     clients = set()
 
     def initialize(self, kwc):
+      print("initializing WebSocketHandler")
       self.kwc = kwc
       self.kwc.gcode.register_respond_callback(self.respond_callback)
-      print("initializing WebSocketHandler")
       pc = tornado.ioloop.PeriodicCallback(self.report_status, 200)
       pc.start()
 
     def broadcast(self, payload):
-        print(("Clients", len(self.clients)))
         for client in self.clients:
             try:
                 client.write_message(json.dumps(payload, default=lambda x: x.__dict__))
