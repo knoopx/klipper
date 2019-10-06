@@ -104,7 +104,7 @@ class TMC2209:
 
     def get_status(self, eventtime):
         status = {}
-        for reg_name, val in self.cmdhelper.fields.registers.items():
+        for reg_name, val in self.fields.registers.items():
             status[reg_name] = val
 
         return status
