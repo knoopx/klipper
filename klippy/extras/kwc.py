@@ -16,7 +16,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def initialize(self, kwc):
       self.kwc = kwc
       print("initializing WebSocketHandler")
-      pc = tornado.ioloop.PeriodicCallback(self.report_status, 1000)
+      pc = tornado.ioloop.PeriodicCallback(self.report_status, 200)
       pc.start()
 
     def check_origin(self, origin):
