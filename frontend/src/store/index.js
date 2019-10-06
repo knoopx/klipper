@@ -66,7 +66,7 @@ export default types
       if (payload.status) {
         self.gotStatus = true
         self.status = payload.status
-        // console.log(self.status)
+        console.log(self.status)
       }
     },
   }))

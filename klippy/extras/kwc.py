@@ -70,9 +70,12 @@ class KlipperWebControl:
 
     def update_status_callback(self, eventtime):
         for name, object in self.objects:
-            # logging.info("%s status", name)
-            self.status[name] = object.get_status(eventtime)
-            # print({name: status})
+            try:
+                # logging.info("%s status", name)
+                self.status[name] = object.get_status(eventtime)
+                # print({name: status})
+            except:
+                logging.exception("Could not get status for " + name)
 
         return eventtime + 1.
 

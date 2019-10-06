@@ -20,7 +20,6 @@ const App = ({ store }) => {
           <div className="flex flex-auto mb-4 text-lg">
             <div className="flex flex-auto flex-col items-center">
               {JSON.stringify(store.status.toolhead)}
-              {JSON.stringify(store.status.heater)}
               <div>
                 {store.status.toolhead.position[0]}
                 <span className="ml-1 text-grey-darker text-sm font-thin">
