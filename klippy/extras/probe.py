@@ -102,13 +102,13 @@ class PrinterProbe:
         # even number of samples
         return self._calc_mean(z_sorted[middle-1:middle+1])
 
-    def get_status(self, eventtime):
-        with self.lock:
-            res = self.mcu_probe.query_endstop(eventtime)
-            return {
-                'value': res,
-                'triggered': not not res
-            }
+    # def get_status(self, eventtime):
+    #     with self.lock:
+    #         res = self.mcu_probe.query_endstop(eventtime)
+    #         return {
+    #             'value': res,
+    #             'triggered': not not res
+    #         }
 
     def run_probe(self, params={}):
         speed = self.gcode.get_float(
