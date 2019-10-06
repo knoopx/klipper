@@ -1,47 +1,44 @@
-import React, { useEffect } from "react";
-import colors from "../theming/colors";
-import LogCat from "./LogCat";
-import Jogging from "./Jogging";
-import FileList from "./FileList";
-import TemperatureGraph from "./TemperatureGraph";
-import Panel from "./Panel";
-import Button from "./Button";
+import React, { useEffect } from "react"
+
+import LogCat from "./LogCat"
+import Jogging from "./Jogging"
+import FileList from "./FileList"
+import TemperatureGraph from "./TemperatureGraph"
+import Panel from "./Panel"
+import Button from "./Button"
 
 const App = () => {
   return (
-    <div
-      className="flex flex-auto p-1"
-      style={{ backgroundColor: colors.greyDarkest }}
-    >
-      <div className="flex flex-col flex-auto">
+    <div className="flex flex-auto p-1">
+      <div className="flex flex-auto flex-col">
         <Panel title="Status">
-          <div className="flex flex-auto text-lg mb-4">
-            <div className="flex flex-col flex-auto items-center">
+          <div className="flex flex-auto mb-4 text-lg">
+            <div className="flex flex-auto flex-col items-center">
               <div>
                 0.000
-                <span className="ml-1 text-sm font-thin text-grey-darker">
+                <span className="ml-1 text-grey-darker text-sm font-thin">
                   mm
                 </span>
               </div>
-              <div className="text-white font-bold mt-1">X</div>
+              <div className="mt-1 text-white font-bold">X</div>
             </div>
-            <div className="flex flex-col flex-auto items-center">
+            <div className="flex flex-auto flex-col items-center">
               <div>
                 0.000
-                <span className="ml-1 text-sm font-thin text-grey-darker">
+                <span className="ml-1 text-grey-darker text-sm font-thin">
                   mm
                 </span>
               </div>
-              <div className="text-white font-bold mt-1">Y</div>
+              <div className="mt-1 text-white font-bold">Y</div>
             </div>
-            <div className="flex flex-col flex-auto items-center">
+            <div className="flex flex-auto flex-col items-center">
               <div>
                 0.000
-                <span className="ml-1 text-sm font-thin text-grey-darker">
+                <span className="ml-1 text-grey-darker text-sm font-thin">
                   mm
                 </span>
               </div>
-              <div className="text-white font-bold mt-1">Z</div>
+              <div className="mt-1 text-white font-bold">Z</div>
             </div>
           </div>
           <Button>Disconnect</Button>
@@ -51,14 +48,14 @@ const App = () => {
         </Panel>
       </div>
 
-      <div className="flex flex-col flex-auto">
+      <div className="flex flex-auto flex-col">
         <Panel title="Temperature">
           <TemperatureGraph width={400} height={100} />
         </Panel>
         <Panel>Something else</Panel>
       </div>
 
-      <div className="flex flex-col flex-auto">
+      <div className="flex flex-auto flex-col">
         <Panel title="Axes">
           <Jogging />
         </Panel>
@@ -70,9 +67,7 @@ const App = () => {
             </div>
             <div className="flex">
               <div className="mx-1 text-white font-bold">B</div>
-              <div className="mx-1" style={{ color: colors.red }}>
-                220ºC
-              </div>
+              <div className="mx-1 text-red-500">220ºC</div>
             </div>
             <div className="flex">
               <div className="mx-1">P</div>
@@ -85,7 +80,7 @@ const App = () => {
         </Panel>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default App;
+export default App

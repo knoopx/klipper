@@ -13,8 +13,13 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
     def initialize(self, kwc):
       self.kwc = kwc
+      print("WebSocketHandler")
+      print(kwc)
       pc = tornado.ioloop.PeriodicCallback(self.report_status, 1000)
       pc.start()
+
+    def check_origin(self, origin):
+        return True
 
     def open(self):
         self.clients.add(self)
@@ -30,7 +35,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def report_status(self):
         for client in self.clients:
             try:
-                client.write_message({status: self.kwc.status})
+                client.write_message({"status": self.kwc.get_status()})
             except:
                 logging.error("Error sending message", exc_info=True)
 
@@ -45,8 +50,11 @@ class KlipperWebControl:
         self.status = dict()
         self.app = tornado.web.Application([
             # (r"/", MainHandler),
-            (r"/ws", WebSocketHandler, {"kwc": self})
+            tornado.web.url(r"/ws", WebSocketHandler, {"kwc": self}),
         ], cookie_secret=base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes))
+
+    def get_status(self):
+        return self.status
 
     def handle_ready(self):
         self.get_statuses = [(name, o.get_status) for name, o in self.printer.lookup_objects() if hasattr(o, 'get_status')]
@@ -57,8 +65,12 @@ class KlipperWebControl:
         tornado.ioloop.IOLoop.current().start()
 
     def update_status_callback(self, eventtime):
+        print("updating status")
         for name, get_status in self.get_statuses:
-            self.status[name] = get_status(eventtime)
+            status = get_status(eventtime)
+            self.status[name] = status
+            print({"name": status})
+
         return eventtime + 1.
 
 def load_config(config):

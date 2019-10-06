@@ -37,7 +37,7 @@ export default ({ width, height }) => {
 
   const colorScale = scaleOrdinal({
     domain: series,
-    range: [Colors.red, Colors.blue, Colors.green, Colors.blue],
+    range: ["red", "blue", "green", "blue"],
   })
 
   return (

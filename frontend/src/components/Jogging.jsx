@@ -1,36 +1,32 @@
-import React from "react";
-
+import React from "react"
 import {
   MdHome,
   MdKeyboardArrowDown,
   MdKeyboardArrowLeft,
   MdKeyboardArrowRight,
-  MdKeyboardArrowUp
-} from "react-icons/md";
-
-import Colors from "../theming/colors";
+  MdKeyboardArrowUp,
+} from "react-icons/md"
 
 const RadioButton = ({ style, className, ...props }) => (
   <div
     style={{ fontSize: 11, ...style }}
     className={[
-      "rounded p-2 flex inline-block justify-center items-center",
-      className
+      "flex inline-block items-center justify-center p-2 rounded",
+      className,
     ].join(" ")}
     {...props}
   />
-);
+)
 
 const Button = ({ className, ...props }) => (
   <div
     {...props}
-    style={{ backgroundColor: Colors.grey }}
     className={[
-      "text-white rounded m-1 w-10 h-10 flex justify-center items-center",
-      className
+      "flex items-center justify-center h-10 w-10 m-1 rounded bg-gray-500 text-white",
+      className,
     ].join(" ")}
   />
-);
+)
 
 export default () => (
   <div className="flex flex-auto justify-around">
@@ -43,13 +39,13 @@ export default () => (
         </Button>
       </div>
       <div className="flex">
-        <Button className="">
+        <Button>
           <MdKeyboardArrowLeft size={32} />
         </Button>
-        <Button className="">
+        <Button>
           <MdHome size={32} />
         </Button>
-        <Button className="">
+        <Button>
           <MdKeyboardArrowRight size={32} />
         </Button>
       </div>
@@ -68,7 +64,7 @@ export default () => (
         </div>
 
         <div className="flex">
-          <Button className="">
+          <Button>
             <MdHome size={32} />
           </Button>
         </div>
@@ -78,16 +74,8 @@ export default () => (
           </Button>
         </div>
       </div>
-      <div
-        className="ml-3 inline-flex flex-col flex-auto rounded"
-        style={{ backgroundColor: Colors.grey }}
-      >
-        <RadioButton
-          className="text-white"
-          style={{ backgroundColor: Colors.blueDarker }}
-        >
-          0.1
-        </RadioButton>
+      <div className="flex-auto flex-col inline-flex ml-3 rounded bg-gray-500">
+        <RadioButton className="bg-blue-600 text-white">0.1</RadioButton>
         <RadioButton>0.5</RadioButton>
         <RadioButton>1.0</RadioButton>
         <RadioButton>5.0</RadioButton>
@@ -95,4 +83,4 @@ export default () => (
       </div>
     </div>
   </div>
-);
+)
