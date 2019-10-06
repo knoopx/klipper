@@ -1,4 +1,5 @@
 import React, { useEffect } from "react"
+import { hot } from "react-hot-loader/root"
 
 import LogCat from "./LogCat"
 import Jogging from "./Jogging"
@@ -83,4 +84,4 @@ const App = () => {
   )
 }
 
-export default App
+export default hot(App)
