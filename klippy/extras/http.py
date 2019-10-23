@@ -20,22 +20,27 @@ def subscribable(func):
 
         def callback(eventtime):
             logging.info("callback")
-            q.put(self.event(func(self, *args, **kwargs)), False)
+            q.put(func(self, *args, **kwargs), False)
             return eventtime + .25
 
         if "text/event-stream" in request.headers.get('Accept'):
             logging.info("event stream request")
-            response.content_type =  'text/event-stream'
-            response.cache_control = 'no-cache'
+            response.set_header('Content-Type', 'text/event-stream')
+            response.set_header('Cache-Control', 'no-cache')
             timer = self.reactor.register_timer(callback, self.reactor.NOW)
+
             # self.reactor.unregister_timer(self.work_timer)
             while True:
-                logging.info("queue")
-                yield q.get()
+                logging.info(request.environ)
+                try:
+                    obj = q.get()
+                    yield "data: %s\n\n" % self.json(obj)
+                except:
+                    logging.exception("error")
 
         else:
             logging.info("regular request")
-            response.content_type = 'application/json'
+            response.set_header('Content-Type', 'application/json')
             yield self.json(func(self, *args, **kwargs))
 
     return wrapper
@@ -72,12 +77,6 @@ class HTTPServer(Bottle):
     def json(self, obj):
         logging.info("json")
         return json.dumps(obj, default=lambda x: None)
-
-    def event(self, obj, type=None):
-        logging.info("event")
-        if type:
-            yield "type: %s\n" % type
-        yield "data: %s\n\n" % self.json(obj)
 
     def default_error_handler(self, res):
         super(HTTPServer, self).default_error_handler(res)
