@@ -309,6 +309,7 @@ class GCodeParser:
             return
         try:
             os.write(self.fd, msg+"\n")
+            self.printer.send_event("gcode:response", msg)
         except os.error:
             logging.exception("Write g-code response")
     def respond_info(self, msg, log=True):
