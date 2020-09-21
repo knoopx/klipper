@@ -55,11 +55,11 @@ class VibrationSineTest:
         i = 0
         pX, pY = X, Y
         freq = self.freq_start
+        _, max_accel = toolhead.get_max_velocity()
         gcmd.respond_info("Testing frequency %.0f Hz" % (freq,))
         while freq <= self.freq_end + 0.000001:
             i += 1
-            accel = min(self.accel_per_hz * freq,
-                        toolhead.requested_accel_to_decel)
+            accel = min(self.accel_per_hz * freq, max_accel)
             omega = 2 * math.pi * freq
             A = accel / omega**2
             t = t_seg * i
@@ -111,10 +111,10 @@ class VibrationPulseTest:
         sign = 1.
         freq = self.freq_start
         gcmd.respond_info("Testing frequency %.0f Hz" % (freq,))
+        _, max_accel = toolhead.get_max_velocity()
         while freq <= self.freq_end + 0.000001:
             t_seg = .25 / freq
-            accel = min(self.accel_per_hz * freq,
-                        toolhead.requested_accel_to_decel)
+            accel = min(self.accel_per_hz * freq, max_accel)
             V = accel * t_seg
             toolhead.cmd_M204(self.gcode.create_gcode_command(
                 "M204", "M204", {"S": accel}))
