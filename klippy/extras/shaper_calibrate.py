@@ -182,12 +182,6 @@ class ShaperCalibrate:
         parent_conn.close()
         return res
 
-    def _smooth(self, x, N):
-        np = self.numpy
-        s = np.r_[x[N-1:0:-1], x, x[-2:-N-1:-1]]
-        w = np.blackman(N)
-        return np.convolve(w / w.sum(), s, mode='valid')
-
     def calc_freq_response(self, raw_values):
         np = self.numpy
         if raw_values is None:
@@ -202,34 +196,23 @@ class ShaperCalibrate:
         SAMPLING_FREQ = N / T
         # Round up to the nearest power of 2 for faster FFT
         M = 1 << int(SAMPLING_FREQ * WINDOW_T_SEC - 1).bit_length()
-        # 1.25 constant is just some guess for blackman window smoothing
-        smooth_window = int(SAMPLING_FREQ / MAX_FREQ)
-        if N <= M or N <= smooth_window:
+        if N <= M:
             return None
 
-        ax = self._smooth(data[:,1], smooth_window)
-        ay = self._smooth(data[:,2], smooth_window)
-        az = self._smooth(data[:,3], smooth_window)
+        ax = data[:,1]
+        ay = data[:,2]
+        az = data[:,3]
 
         mlab = self.mlab
-        # Calculate PSD (power spectral density) of vibrations per window per
-        # frequency bins (the same bins for X, Y, and Z)
-        px, fx, _ = mlab.specgram(ax, Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
-                                  window=np.blackman(M), detrend='mean', mode='psd')
-        py, fy, _ = mlab.specgram(ay, Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
-                                  window=np.blackman(M), detrend='mean', mode='psd')
-        pz, fz, _ = mlab.specgram(az, Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
-                                  window=np.blackman(M), detrend='mean', mode='psd')
-
-        # Pre-smooth PSD between consecutive windows
-        px_avg = (px[:,:-2] + px[:,1:-1] + px[:,2:]) * (1./3.)
-        py_avg = (py[:,:-2] + py[:,1:-1] + py[:,2:]) * (1./3.)
-        pz_avg = (pz[:,:-2] + pz[:,1:-1] + pz[:,2:]) * (1./3.)
-        psd = (px_avg + py_avg + pz_avg).max(axis=1)
-        px_max = px_avg.max(axis=1)
-        py_max = py_avg.max(axis=1)
-        pz_max = pz_avg.max(axis=1)
-        return CalibrationData(fx, psd, px_max, py_max, pz_max)
+        window = np.blackman(M)
+        px, fx = mlab.psd(ax, Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
+                          window=window, detrend='mean', scale_by_freq=False)
+        py, fy = mlab.psd(ay, Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
+                          window=window, detrend='mean', scale_by_freq=False)
+        pz, fz = mlab.psd(az, Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
+                          window=window, detrend='mean', scale_by_freq=False)
+        psd_sum = px + py + pz
+        return CalibrationData(fx, psd_sum, px, py, pz)
 
     def process_accelerometer_data(self, data):
         calibration_data = self.background_process_exec(
