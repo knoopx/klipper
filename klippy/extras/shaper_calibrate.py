@@ -116,22 +116,23 @@ class CalibrationData:
         self.psd_x = psd_x
         self.psd_y = psd_y
         self.psd_z = psd_z
+        self._psd_list = [self.psd_sum, self.psd_x, self.psd_y, self.psd_z]
+        self.data_sets = 1
     def join(self, other):
         np = self.numpy
-        # `other` data may be defined at different frequency bins,
-        # interpolating to fix that.
-        self.psd_sum = np.maximum(self.psd_sum
-                , np.interp(self.freq_bins, other.freq_bins, other.psd_sum))
-        self.psd_x = np.maximum(self.psd_x
-                , np.interp(self.freq_bins, other.freq_bins, other.psd_x))
-        self.psd_y = np.maximum(self.psd_y
-                , np.interp(self.freq_bins, other.freq_bins, other.psd_y))
-        self.psd_z = np.maximum(self.psd_z
-                , np.interp(self.freq_bins, other.freq_bins, other.psd_z))
+        joined_data_sets = self.data_sets + other.data_sets
+        for psd, other_psd in zip(self._psd_list, other._psd_list):
+            # `other` data may be defined at different frequency bins,
+            # interpolating to fix that.
+            other_normalized = other.data_sets * np.interp(
+                    self.freq_bins, other.freq_bins, other_psd)
+            psd *= self.data_sets
+            psd[:] = (psd + other_normalized) * (1. / joined_data_sets)
+        self.data_sets = joined_data_sets
     def set_numpy(self, numpy):
         self.numpy = numpy
     def normalize_to_frequencies(self):
-        for psd in [self.psd_sum, self.psd_x, self.psd_y, self.psd_z]:
+        for psd in self._psd_list:
             # Avoid division by zero errors
             psd /= self.freq_bins + .1
             # Remove low-frequency noise
