@@ -5,40 +5,28 @@
 # Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import optparse
+import optparse, os, sys
 import numpy as np, matplotlib
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                             '..', 'klippy', 'extras'))
+from shaper_calibrate import ShaperCalibrate
 
 def parse_log(logname):
-    f = open(logname, 'r')
-    out = []
-    for line in f:
-        if line.startswith('#'):
-            continue
-        parts = line.split(',')
-        if len(parts) != 4:
-            continue
-        try:
-            fparts = [float(p) for p in parts]
-        except ValueError:
-            continue
-        out.append(fparts)
-    return out
-
+    return np.loadtxt(logname, comments='#', delimiter=',')
 
 ######################################################################
 # Raw accelerometer graphing
 ######################################################################
 
 def plot_accel(data, logname):
-    first_time = data[0][0]
-    times = [d[0] - first_time for d in data]
+    first_time = data[0, 0]
+    times = data[:,0] - first_time
     fig, axes = matplotlib.pyplot.subplots(nrows=3, sharex=True)
     axes[0].set_title("Accelerometer data (%s)" % (logname,))
     axis_names = ['x', 'y', 'z']
     for i in range(len(axis_names)):
-        adata = [d[i+1] for d in data]
-        avg = sum(adata) / len(adata)
-        adata = [ad - avg for ad in adata]
+        avg = data[:,i+1].mean()
+        adata = data[:,i+1] - data[:,i+1].mean()
         ax = axes[i]
         ax.plot(times, adata, alpha=0.8)
         ax.grid(True)
@@ -52,40 +40,35 @@ def plot_accel(data, logname):
 # Frequency graphing
 ######################################################################
 
-class CalibrationData:
-    def __init__(self, freq_bins, times, px, py, pz):
-        self.freq_bins = freq_bins
-        self.times = times
-        self.px, self.py, self.pz = px, py, pz
-        self.pall = px + py + pz
-        avgs = [np.average(d, axis=1) for d in [self.pall, px, py, pz]]
-        self.psd_sum, self.psd_x, self.psd_y, self.psd_z = avgs
-    def get_psd_axis(self, axis):
-        a = {'all': self.pall, 'x': self.px, 'y': self.py, 'z': self.pz}
-        return a[axis]
-
 # Calculate estimated "power spectral density"
 def calc_freq_response(data, max_freq):
-    data = np.array(data)
+    helper = ShaperCalibrate(printer=None)
+    return helper.process_accelerometer_data(data)
+
+def calc_specgram(data, axis):
     N = data.shape[0]
-    T = data[-1,0] - data[0,0]
-    SAMPLING_FREQ = N / T
-    # Round down to a power of 2 for faster FFT
-    M = 1 << int(.5 * SAMPLING_FREQ - 1).bit_length()
+    Fs = N / (data[-1,0] - data[0,0])
+    # Round up to a power of 2 for faster FFT
+    M = 1 << int(.5 * Fs - 1).bit_length()
+    window = np.blackman(M)
+    def _specgram(x):
+        return matplotlib.mlab.specgram(
+                x, Fs=Fs, NFFT=M, noverlap=M//2, window=window,
+                mode='psd', detrend='mean', scale_by_freq=False)
 
-    # Calculate PSD (power spectral density) of vibrations per window per
-    # frequency bins (the same bins for X, Y, and Z)
-    specgram = matplotlib.mlab.specgram
-    px, fx, times = specgram(data[:,1], Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
-                             window=np.blackman(M), detrend='mean', mode='psd')
-    py, fy, _ = specgram(data[:,2], Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
-                         window=np.blackman(M), detrend='mean', mode='psd')
-    pz, fz, _ = specgram(data[:,3], Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
-                         window=np.blackman(M), detrend='mean', mode='psd')
-    return CalibrationData(fx, times, px, py, pz)
+    d = {'x': data[:,1], 'y': data[:,2], 'z': data[:,3]}
+    if axis != 'all':
+        pdata, bins, t = _specgram(d[axis])
+    else:
+        pdata, bins, t = _specgram(d['x'])
+        for ax in 'yz':
+            pdata += _specgram(d[ax])[0]
+    return pdata, bins, t
 
-def plot_frequency(data, logname, max_freq):
-    calibration_data = calc_freq_response(data, max_freq)
+def plot_frequency(datas, lognames, max_freq):
+    calibration_data = calc_freq_response(datas[0], max_freq)
+    for data in datas[1:]:
+        calibration_data.join(calc_freq_response(data, max_freq))
     freqs = calibration_data.freq_bins
     psd = calibration_data.psd_sum[freqs <= max_freq]
     px = calibration_data.psd_x[freqs <= max_freq]
@@ -94,7 +77,7 @@ def plot_frequency(data, logname, max_freq):
     freqs = freqs[freqs <= max_freq]
 
     fig, ax = matplotlib.pyplot.subplots()
-    ax.set_title("Accelerometer data (%s)" % (logname,))
+    ax.set_title("Accelerometer data (%s)" % (', '.join(lognames)))
     ax.set_xlabel('Frequency (Hz)')
     ax.set_ylabel('Power spectral density')
 
@@ -132,10 +115,7 @@ def plot_compare_frequency(datas, lognames, max_freq):
 
 # Plot data in a "spectogram colormap"
 def plot_specgram(data, logname, max_freq, axis):
-    calibration_data = calc_freq_response(data, max_freq)
-    pdata = calibration_data.get_psd_axis(axis)
-    t = calibration_data.times
-    bins = calibration_data.freq_bins
+    pdata, bins, t = calc_specgram(data, axis)
 
     fig, ax = matplotlib.pyplot.subplots()
     ax.set_title("Spectogram %s (%s)" % (axis, logname))
@@ -169,6 +149,9 @@ def main():
                     help="maximum frequency to graph")
     opts.add_option("-r", "--raw", action="store_true",
                     help="graph raw accelerometer data")
+    opts.add_option("-c", "--compare", action="store_true",
+                    help="graph comparison of power spectral density "
+                         "between different accelerometer data files")
     opts.add_option("-s", "--specgram", action="store_true",
                     help="graph spectogram of accelerometer data")
     opts.add_option("-a", type="string", dest="axis", default="all",
@@ -186,10 +169,10 @@ def main():
         fig = plot_accel(datas[0], args[0])
     elif options.specgram:
         fig = plot_specgram(datas[0], args[0], options.max_freq, options.axis)
-    elif len(args) > 1:
+    elif options.compare:
         fig = plot_compare_frequency(datas, args, options.max_freq)
     else:
-        fig = plot_frequency(datas[0], args[0], options.max_freq)
+        fig = plot_frequency(datas, args, options.max_freq)
 
     # Show graph
     if options.output is None:
