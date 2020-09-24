@@ -141,9 +141,8 @@ class CalibrationData:
 class ShaperCalibrate:
     def __init__(self, printer):
         self.printer = printer
-        self.matplotlib = importlib.import_module('matplotlib')
-        self.mlab = importlib.import_module('matplotlib.mlab')
         self.numpy = importlib.import_module('numpy')
+        self.matplotlib = None
 
     def background_process_exec(self, method, args):
         if self.printer is None:
@@ -182,6 +181,46 @@ class ShaperCalibrate:
         parent_conn.close()
         return res
 
+    def _split_into_windows(self, x, window_size, overlap):
+        # Memory-efficient algorithm to split an input 'x' into a series
+        # of overlapping windows
+        step_between_windows = window_size - overlap
+        n_windows = (x.shape[-1] - overlap) // step_between_windows
+        shape = (window_size, n_windows)
+        strides = (x.strides[-1], step_between_windows * x.strides[-1])
+        return self.numpy.lib.stride_tricks.as_strided(
+                x, shape=shape, strides=strides, writeable=False)
+
+    def _psd(self, x, fs, nfft):
+        # Calculate power spectral density (PSD) using Welch's algorithm
+        np = self.numpy
+        window = np.blackman(nfft)
+        # Compensation for windowing loss
+        scale = 1.0 / (window**2).sum()
+
+        # Split into overlapping windows of size nfft
+        overlap = nfft // 2
+        x = self._split_into_windows(x, nfft, overlap)
+
+        # First detrend, then apply windowing function
+        x = window[:, None] * (x - np.mean(x, axis=0))
+
+        # Calculate frequency response for each window using FFT
+        result = np.fft.rfft(x, n=nfft, axis=0)
+        result = np.conjugate(result) * result
+        result *= scale / fs
+        # For one-sided FFT output the response must be doubled, except
+        # the last point for unpaired Nyquist frequency (assuming even nfft)
+        # and the 'DC' term (0 Hz)
+        result[1:-1,:] *= 2.
+
+        # Welch's algorithm: average response over windows
+        psd = result.real.mean(axis=-1)
+
+        # Calculate the frequency bins
+        freqs = np.fft.rfftfreq(nfft, 1. / fs)
+        return freqs, psd
+
     def calc_freq_response(self, raw_values):
         np = self.numpy
         if raw_values is None:
@@ -199,20 +238,12 @@ class ShaperCalibrate:
         if N <= M:
             return None
 
-        ax = data[:,1]
-        ay = data[:,2]
-        az = data[:,3]
-
-        mlab = self.mlab
-        window = np.blackman(M)
-        px, fx = mlab.psd(ax, Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
-                          window=window, detrend='mean', scale_by_freq=False)
-        py, fy = mlab.psd(ay, Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
-                          window=window, detrend='mean', scale_by_freq=False)
-        pz, fz = mlab.psd(az, Fs=SAMPLING_FREQ, NFFT=M, noverlap=M//2,
-                          window=window, detrend='mean', scale_by_freq=False)
-        psd_sum = px + py + pz
-        return CalibrationData(fx, psd_sum, px, py, pz)
+        # Calculate PSD (power spectral density) of vibrations per
+        # frequency bins (the same bins for X, Y, and Z)
+        fx, px = self._psd(data[:,1], SAMPLING_FREQ, M)
+        fy, py = self._psd(data[:,2], SAMPLING_FREQ, M)
+        fz, pz = self._psd(data[:,3], SAMPLING_FREQ, M)
+        return CalibrationData(fx, px+py+pz, px, py, pz)
 
     def process_accelerometer_data(self, data):
         calibration_data = self.background_process_exec(
@@ -318,6 +349,7 @@ class ShaperCalibrate:
         return data
 
     def setup_matplotlib(self, output_to_file):
+        self.matplotlib = importlib.import_module('matplotlib')
         if output_to_file:
             self.matplotlib.rcParams.update({'figure.autolayout': True})
             self.matplotlib.use('Agg')
