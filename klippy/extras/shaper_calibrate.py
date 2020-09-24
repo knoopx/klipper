@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from __future__ import print_function
-import importlib, logging, math, multiprocessing, optparse
+import importlib, logging, math, multiprocessing
 
 MIN_FREQ = 10.
 MAX_FREQ = 200.
@@ -344,10 +344,6 @@ class ShaperCalibrate:
             all_shaper_vals.append((shaper.name, shaper_freq, shaper_vals))
         return (best_shaper, best_freq, all_shaper_vals)
 
-    def parse_log(self, logname):
-        data = self.numpy.genfromtxt(logname, delimiter=',', skip_header=1)
-        return data
-
     def setup_matplotlib(self, output_to_file):
         self.matplotlib = importlib.import_module('matplotlib')
         if output_to_file:
@@ -451,47 +447,3 @@ class ShaperCalibrate:
         except IOError as e:
             raise self.printer.command_error("Error writing to file '%s': %s",
                                              output, str(e))
-
-def main():
-    # Parse command-line arguments
-    usage = "%prog [options] <log>"
-    opts = optparse.OptionParser(usage)
-    opts.add_option("-o", "--output", type="string", dest="output",
-                    default=None, help="filename of output graph")
-    opts.add_option("-c", "--csv", type="string", dest="csv",
-                    default=None, help="filename of output csv file")
-    options, args = opts.parse_args()
-    if len(args) < 1:
-        opts.error("Incorrect number of arguments")
-
-    calibrate = ShaperCalibrate(None)
-
-    # Draw graph
-    calibrate.setup_matplotlib(options.output is not None)
-
-    calibration_data = None
-    for log in args:
-        # Parse data
-        parsed_data = calibrate.parse_log(log)
-        new_data = calibrate.process_accelerometer_data(parsed_data)
-        if calibration_data is None:
-            calibration_data = new_data
-        else:
-            calibration_data.join(new_data)
-    calibration_data.normalize_to_frequencies()
-    shaper_name, shaper_freq, shapers_vals = calibrate.find_best_shaper(
-            calibration_data, print)
-    print("Recommended shaper is %s @ %.1f Hz" % (shaper_name, shaper_freq))
-
-    # Show graph
-    fig = calibrate.plot_freq_response(calibration_data,
-                                       shapers_vals, shaper_name)
-    if options.output is not None:
-        fig.set_size_inches(8, 6)
-        fig.savefig(options.output)
-    if options.csv is not None:
-        calibrate.save_calibration_data(
-                options.csv, calibration_data, shapers_vals)
-
-if __name__ == '__main__':
-    main()
