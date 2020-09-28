@@ -142,7 +142,14 @@ class CalibrationData:
 class ShaperCalibrate:
     def __init__(self, printer):
         self.printer = printer
-        self.numpy = importlib.import_module('numpy')
+        self.error = printer.command_error if printer else Exception
+        try:
+            self.numpy = importlib.import_module('numpy')
+        except ImportError:
+            raise self.error(
+                    "Failed to import `numpy` module, make sure it was "
+                    "installed via `~/klippy-env/bin/pip install` (refer to "
+                    "docs/Measuring_Resonances.md for more details).")
         self.matplotlib = None
 
     def background_process_exec(self, method, args):
@@ -346,7 +353,13 @@ class ShaperCalibrate:
         return (best_shaper, best_freq, all_shaper_vals)
 
     def setup_matplotlib(self, output_to_file):
-        self.matplotlib = importlib.import_module('matplotlib')
+        try:
+            self.matplotlib = importlib.import_module('matplotlib')
+        except ImportError:
+            raise self.error(
+                    "Failed to import `matplotlib` module which is required "
+                    "to plot charts. Make sure it was installed via "
+                    "`~/klippy-env/bin/pip install` correctly")
         if output_to_file:
             self.matplotlib.rcParams.update({'figure.autolayout': True})
             self.matplotlib.use('Agg')
