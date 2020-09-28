@@ -6,10 +6,13 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import optparse, os, sys
+from textwrap import wrap
 import numpy as np, matplotlib
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                              '..', 'klippy', 'extras'))
 from shaper_calibrate import ShaperCalibrate
+
+MAX_TITLE_LENGTH=80
 
 def parse_log(logname):
     return np.loadtxt(logname, comments='#', delimiter=',')
@@ -22,7 +25,8 @@ def plot_accel(data, logname):
     first_time = data[0, 0]
     times = data[:,0] - first_time
     fig, axes = matplotlib.pyplot.subplots(nrows=3, sharex=True)
-    axes[0].set_title("Accelerometer data (%s)" % (logname,))
+    axes[0].set_title("\n".join(wrap("Accelerometer data (%s)" % (logname,),
+                                     MAX_TITLE_LENGTH)))
     axis_names = ['x', 'y', 'z']
     for i in range(len(axis_names)):
         avg = data[:,i+1].mean()
@@ -77,7 +81,8 @@ def plot_frequency(datas, lognames, max_freq):
     freqs = freqs[freqs <= max_freq]
 
     fig, ax = matplotlib.pyplot.subplots()
-    ax.set_title("Accelerometer data (%s)" % (', '.join(lognames)))
+    ax.set_title("\n".join(wrap(
+        "Accelerometer data (%s)" % (', '.join(lognames)), MAX_TITLE_LENGTH)))
     ax.set_xlabel('Frequency (Hz)')
     ax.set_ylabel('Power spectral density')
 
@@ -104,7 +109,7 @@ def plot_compare_frequency(datas, lognames, max_freq):
         freqs = calibration_data.freq_bins
         psd = calibration_data.psd_sum[freqs <= max_freq]
         freqs = freqs[freqs <= max_freq]
-        ax.plot(freqs, psd, label=logname, alpha=0.6)
+        ax.plot(freqs, psd, label="\n".join(wrap(logname, 60)), alpha=0.6)
 
     ax.grid(True)
     fontP = matplotlib.font_manager.FontProperties()
@@ -118,7 +123,8 @@ def plot_specgram(data, logname, max_freq, axis):
     pdata, bins, t = calc_specgram(data, axis)
 
     fig, ax = matplotlib.pyplot.subplots()
-    ax.set_title("Spectogram %s (%s)" % (axis, logname))
+    ax.set_title("\n".join(wrap("Spectrogram %s (%s)" % (axis, logname),
+                 MAX_TITLE_LENGTH)))
     ax.pcolormesh(t, bins, pdata, norm=matplotlib.colors.LogNorm())
     ax.set_ylim([0., max_freq])
     ax.set_ylabel('frequency (hz)')

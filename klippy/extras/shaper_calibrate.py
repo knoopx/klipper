@@ -109,6 +109,10 @@ INPUT_SHAPERS = [
     InputShaperCfg('3hump_ei', get_3hump_ei_shaper, 50.),
 ]
 
+######################################################################
+# Frequency response calculation and shaper auto-tuning
+######################################################################
+
 class CalibrationData:
     def __init__(self, freq_bins, psd_sum, psd_x, psd_y, psd_z):
         self.freq_bins = freq_bins
