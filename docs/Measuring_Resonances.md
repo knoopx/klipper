@@ -38,11 +38,30 @@ toolhead and one for the bed, and run the measurements twice.
 ## Software installation
 
 Note that resonance measurements and shaper auto-calibration require additional
-dependencies not installed by default. You will have to run on your Raspberry Pi
+software dependencies not installed by default. You will have to run on your
+Raspberry Pi
 ```
-$ ~/klippy-env/bin/pip install matplotlib
+$ ~/klippy-env/bin/pip install -v numpy
 ```
-to install the missing dependencies.
+to install `numpy` package. Note that, depending on the performance of the
+CPU, it may take *a lot* of time, up to 10-20 minutes. Be patient and wait
+for the completion of the installation. On some occasions, if the board has
+too little RAM, the installation may fail and you will need to enable swap.
+
+Note that if you want Klipper to be able to plot the charts with the results
+of the measurements, additionally you will have to install `matplotlib`:
+```
+$ ~/klippy-env/bin/pip install -v matplotlib
+```
+
+If installing prerequisites takes too much time or fail for whatever reason,
+there is, in principle, another possibility to run a stand-alone script to
+automatically tune the input shapers (will be covered later in the guide).
+In this case, one must run the following command to install the missing
+dependencies instead
+```
+$ sudo apt install python-numpy python-matplotlib
+```
 
 Afterwards, follow the instructions in the
 [RPi Microcontroller document](RPi_microcontroller.md) to setup the
@@ -83,7 +102,9 @@ Recv: // adxl345 values (x, y, z): 470.719200, 941.438400, 9728.196800
 
 Try running `MEASURE_AXES_NOISE` in Octoprint, you should get some baseline
 numbers for the noise of accelerometer on the axes (should be somewhere
-in the range of ~10-100).
+in the range of ~1-100). Note that this feature will not be available if
+`numpy` package was not installed (see
+[Software installation](#software-installation) for more details).
 
 ## Measuring the resonances
 
@@ -104,19 +125,28 @@ as it is not valid to run the resonance testing with the input shaper enabled.
 
 Run the following command:
 ```
-TEST_RESONANCES AXIS=X FIG_NAME=resonances.png
+TEST_RESONANCES AXIS=X CSV_NAME=resonances.csv
 ```
 Note that it will create vibrations on X axis. If that works, run for Y axis
 as well:
 ```
-TEST_RESONANCES AXIS=Y FIG_NAME=resonances.png
+TEST_RESONANCES AXIS=Y CSV_NAME=resonances.csv
 ```
-This will generate 2 PNG charts (`/tmp/resonances_x_*.png` and
-`/tmp/resonances_y_*.png`) and 2 files with the CSV data for those charts
-(as some `/tmp/resonance_data_x_*.csv` and `/tmp/resonance_data_x_*.csv` files).
-If you also need raw data from the accelerometer, you can add
-`RAW_NAME=raw_data.csv` to the above commands (2 files `/tmp/raw_data_x_*.csv`
-and `/tmp/raw_data_y_*.csv` will be written).
+This will generate 2 CSV files (`/tmp/resonances_x_*.csv` and
+`/tmp/resonances_y_*.csv`). If you have installed `matplotlib` previously,
+you can also pass the parameter `FIG_NAME=resonances.png`, which will
+additionally generate 2 charts.
+
+Note that the commands above need to have `numpy` installed. If you haven't
+installed it, you can instead pass `RAW_NAME=raw_data.csv` argument to the
+above commands (2 files `/tmp/raw_data_x_*.csv` and `/tmp/raw_data_y_*.csv`
+will be written). One can then run stand-alone scripts on Raspberry Pi
+(specify the correct file name on the command line):
+```
+$ ~/klipper/scripts/graph_accelerometer.py /tmp/raw_data_x_*.csv -o /tmp/resonances_x.png
+$ ~/klipper/scripts/calibrate_shaper.py /tmp/raw_data_x_*.csv -o /tmp/shaper_calibrate_x.png
+```
+or copy the data to the host and run the scripts there.
 
 **Attention!** Be sure to observe the printer for the first time, to make sure
 the vibrations do not become too violent (`M112` command can be used to abort
@@ -159,8 +189,11 @@ In order to attempt to measure the resonance frequencies and automatically
 determine the best parameters for `[input_shaper]`, run the following command
 via Octoprint terminal:
 ```
-SHAPER_CALIBRATE FIG_NAME=calibration.png
+SHAPER_CALIBRATE [FIG_NAME=calibration.png]
 ```
+
+Note that `FIG_NAME` parameter is optional, and should only be passed if
+`matplotlib` was installed.
 
 This will test all frequencies in range 5 Hz - 120 Hz and generate
 `/tmp/calibration_x_*.png` and `/tmp/calibration_y_*.png` charts, as well as
