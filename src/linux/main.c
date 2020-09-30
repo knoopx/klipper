@@ -4,10 +4,10 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include </usr/include/sched.h> // sched_setscheduler
 #include <stdio.h> // fprintf
 #include <string.h> // memset
 #include <unistd.h> // getopt
+#include <sys/syscall.h>
 #include "board/misc.h" // console_sendf
 #include "command.h" // DECL_CONSTANT
 #include "internal.h" // console_setup
@@ -26,7 +26,7 @@ realtime_setup(void)
     struct sched_param sp;
     memset(&sp, 0, sizeof(sp));
     sp.sched_priority = 1;
-    int ret = sched_setscheduler(0, SCHED_FIFO, &sp);
+    int ret = syscall(__NR_sched_setscheduler, 0, SCHED_FIFO, &sp);
     if (ret < 0) {
         report_errno("sched_setscheduler", ret);
         return -1;
